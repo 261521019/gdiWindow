@@ -8,9 +8,9 @@
 
 int WINAPI WinMain(HINSTANCE hInst, HINSTANCE hPrevInst, LPSTR lpCmdLine, int nCmdShow)
 {
-	CGDIWindow simWin(500, 500);
-	simWin.create_window();
-	simWin.message_loop();
+	CGDIWindow gdiWin("Example GDI Window", 1280, 800);
+	gdiWin.create_window();
+	gdiWin.message_loop();
 
 	return 0;
 }

@@ -62,11 +62,13 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="dataPoint.cpp" />
     <ClCompile Include="gdiWindow.cpp" />
     <ClCompile Include="SimpleWindow.cpp" />
     <ClCompile Include="winMain.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="dataPoint.h" />
     <ClInclude Include="gdiWindow.h" />
     <ClInclude Include="simpleWindow.h" />
     <ClInclude Include="winMain.h" />
