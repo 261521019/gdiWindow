@@ -13,6 +13,31 @@ CDataPoint::CDataPoint()
 	x = y = size = r = g = b = 0;
 }
 
+CDataPoint::CDataPoint(const int xVal, const int yVal)
+{
+	x = y = size = r = g = b = 0;
+	set_x(xVal);
+	set_y(yVal);
+}
+
+CDataPoint::CDataPoint(const int xVal, const int yVal, const int sizeVal)
+{
+	x = y = size = r = g = b = 0;
+	set_x(xVal);
+	set_y(yVal);
+	set_size(sizeVal);
+}
+
+CDataPoint::CDataPoint(const int xVal, const int yVal, const int sizeVal, const int rVal, const int gVal, const int bVal)
+{
+	set_x(xVal);
+	set_y(yVal);
+	set_size(sizeVal);
+	set_r(rVal);
+	set_g(gVal);
+	set_b(bVal);
+}
+
 CDataPoint::~CDataPoint()
 {
 }

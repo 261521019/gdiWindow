@@ -17,24 +17,29 @@ class CDataPoint
 {
 public:
 	CDataPoint();
+	CDataPoint(const int x, const int y);
+	CDataPoint(const int x, const int y, const int size);
+	CDataPoint(const int x, const int y, const int size, const int r, const int g, const int b);
 	~CDataPoint();
 	int get_x(){ return x;};
 	int get_y(){ return y;};
+	int get_x_bounds(){ return CDP_X_UPPER_BOUND;};
+	int get_y_bounds(){ return CDP_Y_UPPER_BOUND;};
 	int get_size(){ return size;};
 	int get_r(){ return r;};
 	int get_g(){ return g;};
 	int get_b(){ return b;};
-	int set_x(int xVal = 0);
-	int set_y(int yVal = 0);
-	int set_size(int sizeVal = 0);
-	int set_r(int rVal = 0);
-	int set_g(int gVal = 0);
-	int set_b(int bVal = 0);
+	int set_x(const int xVal = 0);
+	int set_y(const int yVal = 0);
+	int set_size(const int sizeVal = 0);
+	int set_r(const int rVal = 0);
+	int set_g(const int gVal = 0);
+	int set_b(const int bVal = 0);
 private:
-	int x;
-	int y;
-	int size;
-	int r;
-	int g;
-	int b;
+	int x; // Offset in pixels from left edge
+	int y; // Offset in pixels from top edge
+	int size; // Size in pixels
+	int r; // red color component
+	int g; // green color component
+	int b; // blue color component
 };
