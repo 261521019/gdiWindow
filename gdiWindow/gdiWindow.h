@@ -10,6 +10,7 @@
 #pragma once
 
 #define MAX_DATAPOINTS 300
+#define MAX_CLUSTERS 3
 
 #include "simpleWindow.h"
 #include "dataPoint.h"
@@ -33,10 +34,12 @@ public:
 	void message_loop();
 	void update_window(HDC hdc);
 	void draw_point(HDC hdc, CDataPoint* pDP, const int xOffset = 0, const int yOffset = 0);
+	void draw_cluster(HDC hdc, CDataPoint* pDP, const int xOffset = 0, const int yOffset = 0);
 private:
 	GdiplusStartupInput gdiplusStartupInput;
 	ULONG_PTR gdiplusToken;
 	vector<CDataPoint> vPoints;
+	vector<CDataPoint> vClusters;
 	LRESULT CALLBACK windowProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
 	void initialize_data();
 	void analyze_data();

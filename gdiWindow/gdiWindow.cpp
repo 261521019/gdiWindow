@@ -130,6 +130,13 @@ void CGDIWindow::update_window(HDC hdc)
 		draw_point(hdc, &dataPoint, clusterOffsetX, clusterOffsetY);
 	}
 
+	// Draw each cluster center
+	for (vector<CDataPoint>::iterator cIt = vClusters.begin() ; cIt != vClusters.end(); ++cIt)
+	{
+		CDataPoint &dataPoint = *cIt;
+		draw_cluster(hdc, &dataPoint, clusterOffsetX, clusterOffsetY);
+	}
+
 	// Copy from the memory DC to the original
 	BitBlt(originalHDC, 0, 0, width, height, hdc, 0, 0, SRCCOPY); 
 
@@ -154,6 +161,19 @@ void CGDIWindow::initialize_data()
 									rand()%CDP_COLOR_UPPER_BOUND,
 									rand()%CDP_COLOR_UPPER_BOUND,
 									rand()%CDP_COLOR_UPPER_BOUND));
+	}
+
+	vClusters.clear();
+
+	for(int j=0; j < MAX_CLUSTERS; j++)
+	{
+		// Load a randomized data point into the vector
+		vClusters.push_back(CDataPoint(rand()%CDP_X_UPPER_BOUND, 
+									rand()%CDP_Y_UPPER_BOUND,
+									10, // No need to randomize, this is overridden elsewhere
+									rand()%(CDP_COLOR_UPPER_BOUND-100),
+									rand()%(CDP_COLOR_UPPER_BOUND-100),
+									rand()%(CDP_COLOR_UPPER_BOUND-100)));
 	}
 }
 
@@ -187,49 +207,66 @@ void CGDIWindow::draw_point(HDC hdc, CDataPoint* pDP, const int xOffset, const i
 
 }
 
-// Analyze the data points to determine clusters, and color code accordingly
+// Draw a single cluster, which is a sqaure filled with a transparent color
+// based on the data in the CDataPoint passed
+// The size parameter isn't used - rather the size of the rectangles are hard coded within
+void CGDIWindow::draw_cluster(HDC hdc, CDataPoint* pDP, const int xOffset, const int yOffset)
+{
+	int clusterSize = 10;
+
+	Graphics gfx(hdc);
+
+	Pen pen(Color(pDP->get_r(), 
+				pDP->get_g(), 
+				pDP->get_b()));
+	
+	// Rectangle marker
+	gfx.DrawRectangle(&pen, (const int)(pDP->get_x() + (clusterSize/2) + xOffset),
+						(const int)(pDP->get_y() + (clusterSize/2) + yOffset),
+						clusterSize, 
+						clusterSize);
+
+	// 80% transparent but otherwise the same color
+	SolidBrush solidBrush(Color(80, pDP->get_r(),
+									pDP->get_g(),
+									pDP->get_b()));
+
+	// Fill the same region with the transparent color
+	gfx.FillRectangle(&solidBrush, (const int)(pDP->get_x() + (clusterSize/2) + xOffset),
+						(const int)(pDP->get_y() + (clusterSize/2) + yOffset),
+						clusterSize, 
+						clusterSize);
+}
+
+// Analyze the data points to associate data points with clusters, and color code accordingly
+// TODO: the clusters are random, but need to work on a least squares approach to minimizing and 
+//		finding the best cluster centers
 void CGDIWindow::analyze_data()
 {
-	// Centers of N clusters
-	int center1X = 50;
-	int center1Y = 50;
-	int center2X = 450;
-	int center2Y = 450;
-
-	float distanceTo1 = 0.f;
-	float distanceTo2 = 0.f;
-
-	// Calculate the distance to each cluster center
-	for (vector<CDataPoint>::iterator it = vPoints.begin() ; it != vPoints.end(); ++it)
+	// For each data point, measure the distance to each cluster and color the data point 
+	// according to the closest cluster
+	for(vector<CDataPoint>::iterator it = vPoints.begin(); it != vPoints.end(); ++it)
 	{
-		float X2minusX1 = (float)(it->get_x() - center1X); 
-		float Y2minusY1 = (float)(it->get_y() - center1Y);
+		float lastDistance = CDP_X_UPPER_BOUND + CDP_Y_UPPER_BOUND;
 
-		float squaredXdiff = X2minusX1*X2minusX1;
-		float squaredYdiff = Y2minusY1*Y2minusY1;
-		
-		distanceTo1 = sqrt(squaredXdiff + squaredYdiff);
-
-		X2minusX1 = (float)(it->get_x() - center2X); 
-		Y2minusY1 = (float)(it->get_y() - center2Y);
-
-		squaredXdiff = X2minusX1*X2minusX1;
-		squaredYdiff = Y2minusY1*Y2minusY1;
-		
-		distanceTo2 = sqrt(squaredXdiff + squaredYdiff);
-
-		// If closer to the first center, color red, otherwise blue
-		if(distanceTo1 < distanceTo2)
+		for(vector<CDataPoint>::iterator cIt = vClusters.begin(); cIt != vClusters.end(); ++cIt)
 		{
-			it->set_r(255);
-			it->set_b();
-			it->set_g();
-		}
-		else
-		{
-			it->set_r();
-			it->set_b(255);
-			it->set_g();
-		}
+			float X2minusX1 = (float)(it->get_x() - (float)(cIt->get_x())); 
+			float Y2minusY1 = (float)(it->get_y() - (float)(cIt->get_y()));
+
+			float squaredXdiff = X2minusX1*X2minusX1;
+			float squaredYdiff = Y2minusY1*Y2minusY1;
+		
+			float distance = sqrt(squaredXdiff + squaredYdiff);
+
+			// If this cluster is closer than the last, color code to this cluster
+			if(distance < lastDistance)
+			{
+				lastDistance = distance;
+				it->set_r(cIt->get_r());
+				it->set_b(cIt->get_b());
+				it->set_g(cIt->get_g());
+			}
+		} // end FOR each cluster 
 	} // end FOR each data point
 }
