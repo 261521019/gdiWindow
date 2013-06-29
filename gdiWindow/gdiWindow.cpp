@@ -157,7 +157,7 @@ void CGDIWindow::initialize_data()
 		// Load a randomized data point into the vector
 		vPoints.push_back(CDataPoint(rand()%CDP_X_UPPER_BOUND, 
 									rand()%CDP_Y_UPPER_BOUND,
-									rand()%6,
+									3, /*rand()%6,*/
 									rand()%CDP_COLOR_UPPER_BOUND,
 									rand()%CDP_COLOR_UPPER_BOUND,
 									rand()%CDP_COLOR_UPPER_BOUND));
@@ -167,14 +167,50 @@ void CGDIWindow::initialize_data()
 
 	for(int j=0; j < MAX_CLUSTERS; j++)
 	{
-		// Load a randomized data point into the vector
-		vClusters.push_back(CDataPoint(rand()%CDP_X_UPPER_BOUND, 
-									rand()%CDP_Y_UPPER_BOUND,
-									10, // No need to randomize, this is overridden elsewhere
-									rand()%(CDP_COLOR_UPPER_BOUND-100),
-									rand()%(CDP_COLOR_UPPER_BOUND-100),
-									rand()%(CDP_COLOR_UPPER_BOUND-100)));
-	}
+		// Use RGBY for the first 4 colors
+		if(j<4)
+		{
+			int redVal, greenVal, blueVal;
+			redVal = greenVal = blueVal = 0;
+
+			switch(j)
+			{
+			case 0:
+				redVal = 255;
+				break;
+			case 1:
+				greenVal = 150;
+				break;
+			case 2:
+				blueVal = 255;
+				break;
+			case 3: // Yellow
+				redVal = 200;
+				greenVal = 200;
+				break;
+			default:
+				// Should never arrive here
+				break;
+			}
+
+			vClusters.push_back(CDataPoint(rand()%CDP_X_UPPER_BOUND,
+										   rand()%CDP_Y_UPPER_BOUND,
+										   10, // No need to randomize, this is overriden elsewhere
+										   redVal,
+										   greenVal,
+										   blueVal));
+		} // end if j<4
+		else // else j >= 4, so generate a random color
+		{
+			// Load a randomized data point into the vector
+			vClusters.push_back(CDataPoint(rand()%CDP_X_UPPER_BOUND, 
+										rand()%CDP_Y_UPPER_BOUND,
+										10, // No need to randomize, this is overridden elsewhere
+										rand()%(CDP_COLOR_UPPER_BOUND-100),
+										rand()%(CDP_COLOR_UPPER_BOUND-100),
+										rand()%(CDP_COLOR_UPPER_BOUND-100)));
+		} // end else
+	} // end for each cluster
 }
 
 // Draw a single data point, which is a circle filled with a transparent color
@@ -204,7 +240,15 @@ void CGDIWindow::draw_point(HDC hdc, CDataPoint* pDP, const int xOffset, const i
 						(const int)(pDP->get_size()), 
 						(const int)(pDP->get_size()));
 
+	solidBrush.SetColor(Color(30, pDP->get_r(),
+								  pDP->get_g(),
+								  pDP->get_b()));
 
+	// Fill in an outer region with a lower transparency version on the same color
+	gfx.FillEllipse(&solidBrush, (const int)(pDP->get_x() + (pDP->get_size()/2) -10 + xOffset),
+								 (const int)(pDP->get_y() + (pDP->get_size()/2) -10 + yOffset),
+								 (const int)(pDP->get_size() + 20),
+								 (const int)(pDP->get_size() + 20));
 }
 
 // Draw a single cluster, which is a sqaure filled with a transparent color

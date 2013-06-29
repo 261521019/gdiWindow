@@ -9,8 +9,8 @@
 
 #pragma once
 
-#define MAX_DATAPOINTS 300
-#define MAX_CLUSTERS 3
+#define MAX_DATAPOINTS 100
+#define MAX_CLUSTERS 4
 
 #include "simpleWindow.h"
 #include "dataPoint.h"
