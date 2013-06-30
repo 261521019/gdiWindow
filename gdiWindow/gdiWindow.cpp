@@ -69,6 +69,10 @@ LRESULT CALLBACK CGDIWindow::windowProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPA
 	case WM_ERASEBKGND:
 		break;
 	case WM_LBUTTONDOWN:
+
+		InvalidateRect(hWnd, NULL, NULL);
+		break;
+	case WM_RBUTTONDOWN:
 		initialize_data();
 		analyze_data();
 		InvalidateRect(hWnd, NULL, NULL);
@@ -303,13 +307,14 @@ void CGDIWindow::analyze_data()
 		
 			float distance = sqrt(squaredXdiff + squaredYdiff);
 
-			// If this cluster is closer than the last, color code to this cluster
+			// If this cluster is closer than the last, assign and color code to this cluster
 			if(distance < lastDistance)
 			{
 				lastDistance = distance;
 				it->set_r(cIt->get_r());
 				it->set_b(cIt->get_b());
 				it->set_g(cIt->get_g());
+				it->set_clusterIndex(cIt - vPoints.begin());
 			}
 		} // end FOR each cluster 
 	} // end FOR each data point

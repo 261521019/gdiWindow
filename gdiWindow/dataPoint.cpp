@@ -10,19 +10,19 @@
 
 CDataPoint::CDataPoint()
 {
-	x = y = size = r = g = b = 0;
+	clusterIndex = x = y = size = r = g = b = 0;
 }
 
 CDataPoint::CDataPoint(const int xVal, const int yVal)
 {
-	x = y = size = r = g = b = 0;
+	clusterIndex = x = y = size = r = g = b = 0;
 	set_x(xVal);
 	set_y(yVal);
 }
 
 CDataPoint::CDataPoint(const int xVal, const int yVal, const int sizeVal)
 {
-	x = y = size = r = g = b = 0;
+	clusterIndex = x = y = size = r = g = b = 0;
 	set_x(xVal);
 	set_y(yVal);
 	set_size(sizeVal);
@@ -30,6 +30,7 @@ CDataPoint::CDataPoint(const int xVal, const int yVal, const int sizeVal)
 
 CDataPoint::CDataPoint(const int xVal, const int yVal, const int sizeVal, const int rVal, const int gVal, const int bVal)
 {
+	clusterIndex = 0;
 	set_x(xVal);
 	set_y(yVal);
 	set_size(sizeVal);
@@ -40,6 +41,18 @@ CDataPoint::CDataPoint(const int xVal, const int yVal, const int sizeVal, const 
 
 CDataPoint::~CDataPoint()
 {
+}
+
+// Check bounds and assign the value if param is within bounds
+// Returns the value assigned on success, -1 otherwise
+int CDataPoint::set_clusterIndex(int idx)
+{
+	if(idx)
+		clusterIndex = idx;
+	else
+		return -1;
+
+	return x;
 }
 
 // Check bounds and assign the value if param is within bounds
