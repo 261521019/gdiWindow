@@ -69,13 +69,14 @@ LRESULT CALLBACK CGDIWindow::windowProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPA
 	case WM_ERASEBKGND:
 		break;
 	case WM_LBUTTONDOWN:
-		compute_centroids();
 		assign_data();
+		compute_centroids();
 		InvalidateRect(hWnd, NULL, NULL);
 		break;
 	case WM_RBUTTONDOWN:
 		initialize_data();
 		assign_data();
+		compute_centroids();
 		InvalidateRect(hWnd, NULL, NULL);
 		break;
 	case WM_CREATE:
@@ -104,10 +105,10 @@ void CGDIWindow::update_window(HDC hdc)
 	Graphics graphics(hdc);
 
 	// Offset within the main window where the cluster of points go
-	int clusterOffsetX = 50; // in pixels
-	int clusterOffsetY = 50; // in pixels
-	int clusterXbounds = vPoints[0].get_x_bounds() + 6; // 6 is padding for size
-	int clusterYbounds = vPoints[0].get_y_bounds() + 6; // 6 is padding for size
+	int insetOffsetX = 50; // in pixels
+	int insetOffsetY = 50; // in pixels
+	int insetXbounds = vPoints[0].get_x_bounds() + 6; // 6 is padding for size
+	int insetYbounds = vPoints[0].get_y_bounds() + 6; // 6 is padding for size
 
 	// Background fill
 	SolidBrush bgFill(Color(255,255,255,255));
@@ -115,11 +116,11 @@ void CGDIWindow::update_window(HDC hdc)
 
 	// Inset fill 
 	SolidBrush insetFill(Color(255,240,240,240));
-	graphics.FillRectangle(&insetFill, clusterOffsetX, clusterOffsetY, clusterXbounds, clusterYbounds);
+	graphics.FillRectangle(&insetFill, insetOffsetX, insetOffsetY, insetXbounds, insetYbounds);
 
 	// Outline the inset region
 	Pen insetOutline(Color(255,0,0,0));
-	graphics.DrawRectangle(&insetOutline, clusterOffsetX, clusterOffsetY, clusterXbounds, clusterYbounds);
+	graphics.DrawRectangle(&insetOutline, insetOffsetX, insetOffsetY, insetXbounds, insetYbounds);
 	
 	// Heading
 	SolidBrush  brush(Color(255, 0, 0, 255));
@@ -132,14 +133,14 @@ void CGDIWindow::update_window(HDC hdc)
 	for (vector<CDataPoint>::iterator it = vPoints.begin() ; it != vPoints.end(); ++it)
 	{
 		CDataPoint &dataPoint = *it;
-		draw_point(hdc, &dataPoint, clusterOffsetX, clusterOffsetY);
+		draw_point(hdc, &dataPoint, insetOffsetX, insetOffsetY);
 	}
 
 	// Draw each cluster center
 	for (vector<CDataPoint>::iterator cIt = vClusters.begin() ; cIt != vClusters.end(); ++cIt)
 	{
 		CDataPoint &dataPoint = *cIt;
-		draw_cluster(hdc, &dataPoint, clusterOffsetX, clusterOffsetY);
+		draw_cluster(hdc, &dataPoint, insetOffsetX, insetOffsetY);
 	}
 
 	// Copy from the memory DC to the original
@@ -165,36 +166,36 @@ void CGDIWindow::initialize_data()
 		{
 		case 0:
 			// Upper left quadrant
-			vPoints.push_back(CDataPoint(rand()%CDP_X_UPPER_BOUND/5 + 20, 
-										rand()%CDP_Y_UPPER_BOUND/5 + 20,
-										3, /*rand()%6,*/
+			vPoints.push_back(CDataPoint(rand()%CDP_X_UPPER_BOUND/3 + 20, 
+										rand()%CDP_Y_UPPER_BOUND/3 + 20,
+										3,
 										rand()%CDP_COLOR_UPPER_BOUND,
 										rand()%CDP_COLOR_UPPER_BOUND,
 										rand()%CDP_COLOR_UPPER_BOUND));
 			break;
 		case 1:
 			// Upper right quadrant
-			vPoints.push_back(CDataPoint(rand()%CDP_X_UPPER_BOUND/5 + 300, 
-										rand()%CDP_Y_UPPER_BOUND/5 + 20,
-										3, /*rand()%6,*/
+			vPoints.push_back(CDataPoint(rand()%CDP_X_UPPER_BOUND/3 + 300, 
+										rand()%CDP_Y_UPPER_BOUND/3 + 20,
+										3,
 										rand()%CDP_COLOR_UPPER_BOUND,
 										rand()%CDP_COLOR_UPPER_BOUND,
 										rand()%CDP_COLOR_UPPER_BOUND));
 			break;
 		case 2:
 			// Lower left quadrant
-			vPoints.push_back(CDataPoint(rand()%CDP_X_UPPER_BOUND/5 + 20, 
-										rand()%CDP_Y_UPPER_BOUND/5 + 300,
-										3, /*rand()%6,*/
+			vPoints.push_back(CDataPoint(rand()%CDP_X_UPPER_BOUND/3 + 20, 
+										rand()%CDP_Y_UPPER_BOUND/3 + 300,
+										3,
 										rand()%CDP_COLOR_UPPER_BOUND,
 										rand()%CDP_COLOR_UPPER_BOUND,
 										rand()%CDP_COLOR_UPPER_BOUND));
 			break;
 		case 3:
 			// Lower right quadrant
-			vPoints.push_back(CDataPoint(rand()%CDP_X_UPPER_BOUND/5 + 300, 
-										rand()%CDP_Y_UPPER_BOUND/5 + 300,
-										3, /*rand()%6,*/
+			vPoints.push_back(CDataPoint(rand()%CDP_X_UPPER_BOUND/3 + 300, 
+										rand()%CDP_Y_UPPER_BOUND/3 + 300,
+										3,
 										rand()%CDP_COLOR_UPPER_BOUND,
 										rand()%CDP_COLOR_UPPER_BOUND,
 										rand()%CDP_COLOR_UPPER_BOUND));
@@ -308,14 +309,14 @@ void CGDIWindow::draw_cluster(HDC hdc, CDataPoint* pDP, const int xOffset, const
 	Graphics gfx(hdc);
 
 	Pen pen(Color(pDP->get_r(), 
-				pDP->get_g(), 
-				pDP->get_b()));
+				  pDP->get_g(), 
+				  pDP->get_b()));
 	
 	// Rectangle marker
 	gfx.DrawRectangle(&pen, (const int)(pDP->get_x() + (clusterSize/2) + xOffset),
-						(const int)(pDP->get_y() + (clusterSize/2) + yOffset),
-						clusterSize, 
-						clusterSize);
+						    (const int)(pDP->get_y() + (clusterSize/2) + yOffset),
+						    clusterSize, 
+						    clusterSize);
 
 	// 80% transparent but otherwise the same color
 	SolidBrush solidBrush(Color(80, pDP->get_r(),
@@ -324,9 +325,9 @@ void CGDIWindow::draw_cluster(HDC hdc, CDataPoint* pDP, const int xOffset, const
 
 	// Fill the same region with the transparent color
 	gfx.FillRectangle(&solidBrush, (const int)(pDP->get_x() + (clusterSize/2) + xOffset),
-						(const int)(pDP->get_y() + (clusterSize/2) + yOffset),
-						clusterSize, 
-						clusterSize);
+								   (const int)(pDP->get_y() + (clusterSize/2) + yOffset),
+								   clusterSize, 
+								   clusterSize);
 }
 
 // Assign each data point to the closest cluster and color code accordingly
@@ -369,7 +370,7 @@ void CGDIWindow::compute_centroids()
 	{
 		int xAccum = 0; // x position accumulator
 		int yAccum = 0; // y position accumulator
-		int dpCount = 1; // how many data points 
+		int dpCount = 0; // how many data points 
 		int currentClusterIndex = cIt - vClusters.begin();
 
 		// For each data point...
@@ -384,11 +385,26 @@ void CGDIWindow::compute_centroids()
 
 		} // end FOR each data point
 
-		// Once through all data points, compute the centroid as the mean of x and y
-		float xMean = (float) xAccum / (float) dpCount;
-		float yMean = (float) yAccum / (float) dpCount;
+		// If there are no data points in this cluster, something went wrong, 
+		// so move the cluster center to the center of the x and y range
+		if(!dpCount)
+		{
+			cIt->set_x(CDP_X_UPPER_BOUND/2);
+			cIt->set_y(CDP_Y_UPPER_BOUND/2);
+		}
+		else
+		{
+			// Once through all data points, compute the centroid as the mean of x and y
+			float xMean = (float) xAccum / (float) dpCount;
+			if((xMean - (int)xMean) > 0.5f)
+				xMean++;
 
-		cIt->set_x(xMean);
-		cIt->set_y(yMean); 
+			float yMean = (float) yAccum / (float) dpCount;
+			if((yMean - (int)yMean) > 0.5f)
+				yMean++;
+
+			cIt->set_x((const int)xMean);
+			cIt->set_y((const int)yMean);
+		}
 	} // end for each cluster
 }
