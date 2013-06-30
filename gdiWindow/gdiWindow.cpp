@@ -159,14 +159,56 @@ void CGDIWindow::initialize_data()
 
 	for(int i=0; i < MAX_DATAPOINTS; i++)
 	{
-		// Load a randomized data point into the vector
-		vPoints.push_back(CDataPoint(rand()%CDP_X_UPPER_BOUND, 
-									rand()%CDP_Y_UPPER_BOUND,
-									3, /*rand()%6,*/
-									rand()%CDP_COLOR_UPPER_BOUND,
-									rand()%CDP_COLOR_UPPER_BOUND,
-									rand()%CDP_COLOR_UPPER_BOUND));
-	}
+		int modFoo = i%4;
+		// Artificial steering of clusters
+		switch(modFoo)
+		{
+		case 0:
+			// Upper left quadrant
+			vPoints.push_back(CDataPoint(rand()%CDP_X_UPPER_BOUND/5 + 20, 
+										rand()%CDP_Y_UPPER_BOUND/5 + 20,
+										3, /*rand()%6,*/
+										rand()%CDP_COLOR_UPPER_BOUND,
+										rand()%CDP_COLOR_UPPER_BOUND,
+										rand()%CDP_COLOR_UPPER_BOUND));
+			break;
+		case 1:
+			// Upper right quadrant
+			vPoints.push_back(CDataPoint(rand()%CDP_X_UPPER_BOUND/5 + 300, 
+										rand()%CDP_Y_UPPER_BOUND/5 + 20,
+										3, /*rand()%6,*/
+										rand()%CDP_COLOR_UPPER_BOUND,
+										rand()%CDP_COLOR_UPPER_BOUND,
+										rand()%CDP_COLOR_UPPER_BOUND));
+			break;
+		case 2:
+			// Lower left quadrant
+			vPoints.push_back(CDataPoint(rand()%CDP_X_UPPER_BOUND/5 + 20, 
+										rand()%CDP_Y_UPPER_BOUND/5 + 300,
+										3, /*rand()%6,*/
+										rand()%CDP_COLOR_UPPER_BOUND,
+										rand()%CDP_COLOR_UPPER_BOUND,
+										rand()%CDP_COLOR_UPPER_BOUND));
+			break;
+		case 3:
+			// Lower right quadrant
+			vPoints.push_back(CDataPoint(rand()%CDP_X_UPPER_BOUND/5 + 300, 
+										rand()%CDP_Y_UPPER_BOUND/5 + 300,
+										3, /*rand()%6,*/
+										rand()%CDP_COLOR_UPPER_BOUND,
+										rand()%CDP_COLOR_UPPER_BOUND,
+										rand()%CDP_COLOR_UPPER_BOUND));
+			break;
+		default:
+			vPoints.push_back(CDataPoint(rand()%CDP_X_UPPER_BOUND, 
+										rand()%CDP_Y_UPPER_BOUND,
+										3, /*rand()%6,*/
+										rand()%CDP_COLOR_UPPER_BOUND,
+										rand()%CDP_COLOR_UPPER_BOUND,
+										rand()%CDP_COLOR_UPPER_BOUND));
+			break;
+		} // end case
+	} // end for each data point
 
 	vClusters.clear();
 
@@ -327,7 +369,7 @@ void CGDIWindow::compute_centroids()
 	{
 		int xAccum = 0; // x position accumulator
 		int yAccum = 0; // y position accumulator
-		int dpCount = 0; // how many data points 
+		int dpCount = 1; // how many data points 
 		int currentClusterIndex = cIt - vClusters.begin();
 
 		// For each data point...
@@ -343,8 +385,10 @@ void CGDIWindow::compute_centroids()
 		} // end FOR each data point
 
 		// Once through all data points, compute the centroid as the mean of x and y
-		cIt->set_x(xAccum / dpCount);
-		cIt->set_y(yAccum / dpCount);
+		float xMean = (float) xAccum / (float) dpCount;
+		float yMean = (float) yAccum / (float) dpCount;
 
+		cIt->set_x(xMean);
+		cIt->set_y(yMean); 
 	} // end for each cluster
 }
