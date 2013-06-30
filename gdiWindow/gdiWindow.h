@@ -42,5 +42,6 @@ private:
 	vector<CDataPoint> vClusters;
 	LRESULT CALLBACK windowProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
 	void initialize_data();
-	void analyze_data();
+	void assign_data();
+	void compute_centroids();
 };

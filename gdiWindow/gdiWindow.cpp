@@ -11,7 +11,7 @@
 CGDIWindow::CGDIWindow()
 {
 	initialize_data();
-	analyze_data();
+	assign_data();
 }
 
 CGDIWindow::CGDIWindow(const int w, const int h)
@@ -21,7 +21,7 @@ CGDIWindow::CGDIWindow(const int w, const int h)
 	width = w;
 	height = h;
 	initialize_data();
-	analyze_data();
+	assign_data();
 }
 
 CGDIWindow::CGDIWindow(string name, const int w, const int h)
@@ -31,7 +31,7 @@ CGDIWindow::CGDIWindow(string name, const int w, const int h)
 	width = w;
 	height = h;
 	initialize_data();
-	analyze_data();
+	assign_data();
 }
 
 CGDIWindow::~CGDIWindow(void)
@@ -69,12 +69,13 @@ LRESULT CALLBACK CGDIWindow::windowProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPA
 	case WM_ERASEBKGND:
 		break;
 	case WM_LBUTTONDOWN:
-
+		compute_centroids();
+		assign_data();
 		InvalidateRect(hWnd, NULL, NULL);
 		break;
 	case WM_RBUTTONDOWN:
 		initialize_data();
-		analyze_data();
+		assign_data();
 		InvalidateRect(hWnd, NULL, NULL);
 		break;
 	case WM_CREATE:
@@ -125,7 +126,7 @@ void CGDIWindow::update_window(HDC hdc)
 	FontFamily  fontFamily(L"Lucida Sans");
 	Font        font(&fontFamily, 24, FontStyleRegular, UnitPixel);
 	PointF      pointF(50.0f, 10.0f);
-	graphics.DrawString(L"Cluster Analysis", -1, &font, pointF, &brush);
+	graphics.DrawString(L"K-Means Cluster Analysis", -1, &font, pointF, &brush);
 
 	// Draw each data point
 	for (vector<CDataPoint>::iterator it = vPoints.begin() ; it != vPoints.end(); ++it)
@@ -286,10 +287,8 @@ void CGDIWindow::draw_cluster(HDC hdc, CDataPoint* pDP, const int xOffset, const
 						clusterSize);
 }
 
-// Analyze the data points to associate data points with clusters, and color code accordingly
-// TODO: the clusters are random, but need to work on a least squares approach to minimizing and 
-//		finding the best cluster centers
-void CGDIWindow::analyze_data()
+// Assign each data point to the closest cluster and color code accordingly
+void CGDIWindow::assign_data()
 {
 	// For each data point, measure the distance to each cluster and color the data point 
 	// according to the closest cluster
@@ -314,8 +313,38 @@ void CGDIWindow::analyze_data()
 				it->set_r(cIt->get_r());
 				it->set_b(cIt->get_b());
 				it->set_g(cIt->get_g());
-				it->set_clusterIndex(cIt - vPoints.begin());
+				it->set_clusterIndex(cIt - vClusters.begin());
 			}
 		} // end FOR each cluster 
 	} // end FOR each data point
+}
+
+// Update each cluster's position by computing the centroid of all data points associated with the cluster
+void CGDIWindow::compute_centroids()
+{
+	// For each cluster...
+	for(vector<CDataPoint>::iterator cIt = vClusters.begin(); cIt != vClusters.end(); ++cIt)
+	{
+		int xAccum = 0; // x position accumulator
+		int yAccum = 0; // y position accumulator
+		int dpCount = 0; // how many data points 
+		int currentClusterIndex = cIt - vClusters.begin();
+
+		// For each data point...
+		for(vector<CDataPoint>::iterator it = vPoints.begin(); it != vPoints.end(); ++it)
+		{
+			if(it->get_clusterIndex() == currentClusterIndex)
+			{
+				xAccum += it->get_x();
+				yAccum += it->get_y();
+				dpCount++;
+			}
+
+		} // end FOR each data point
+
+		// Once through all data points, compute the centroid as the mean of x and y
+		cIt->set_x(xAccum / dpCount);
+		cIt->set_y(yAccum / dpCount);
+
+	} // end for each cluster
 }
