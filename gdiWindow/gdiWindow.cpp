@@ -133,17 +133,24 @@ void CGDIWindow::update_window(HDC hdc)
 	graphics.DrawString(L"K-Means Cluster Analysis", -1, &font, pointF, &brush);
 
 	// Draw each data point
-	for (vector<CDataPoint>::iterator it = vPoints.begin() ; it != vPoints.end(); ++it)
+	for( vector<CDataPoint>::iterator it = vPoints.begin() ; it != vPoints.end(); ++it)
 	{
 		CDataPoint &dataPoint = *it;
 		draw_point(hdc, &dataPoint, insetOffsetX, insetOffsetY);
 	}
 
-	// Draw each cluster center
-	for (vector<CDataPoint>::iterator cIt = vClusters.begin() ; cIt != vClusters.end(); ++cIt)
+	// Draw each cluster
+	for( vector<CDataPoint>::iterator cIt = vClusters.begin() ; cIt != vClusters.end(); ++cIt)
 	{
-		CDataPoint &dataPoint = *cIt;
-		draw_cluster(hdc, &dataPoint, insetOffsetX, insetOffsetY);
+		CDataPoint &cluster = *cIt;
+		draw_cluster(hdc, &cluster, insetOffsetX, insetOffsetY);
+	}
+
+	// Draw each optimal cluster
+	for( vector<CDataPoint>::iterator ocIt = vOptimalClusters.begin() ; ocIt != vOptimalClusters.end(); ++ocIt)
+	{
+		CDataPoint &optimalCluster = *ocIt;
+		draw_optimal_cluster(hdc, &optimalCluster, insetOffsetX, insetOffsetY);
 	}
 
 	// Copy from the memory DC to the original
@@ -157,9 +164,17 @@ void CGDIWindow::update_window(HDC hdc)
 
 void CGDIWindow::initialize_data()
 {
+	// How much should the points be gathered into four quadrants?
+	unsigned int gatherDegree = 5;
+	
+	// Temporary storage for randomized point position, which is validated 
+	// and randomized again if either are out of bounds
+	unsigned int pointXpos = 0;
+	unsigned int pointYpos = 0;
+
 	vPoints.clear();
 
-	srand((unsigned int)time(NULL));
+	srand(rand()%300 + (unsigned int)time(NULL));
 
 	for(int i=0; i < MAX_DATAPOINTS; i++)
 	{
@@ -169,50 +184,55 @@ void CGDIWindow::initialize_data()
 		{
 		case 0:
 			// Upper left quadrant
-			vPoints.push_back(CDataPoint(rand()%CDP_X_UPPER_BOUND/6 + 20, 
-										rand()%CDP_Y_UPPER_BOUND/6 + 20,
-										3,
-										rand()%CDP_COLOR_UPPER_BOUND,
-										rand()%CDP_COLOR_UPPER_BOUND,
-										rand()%CDP_COLOR_UPPER_BOUND));
+			pointXpos = rand()%CDP_X_UPPER_BOUND/gatherDegree + 20;
+			pointYpos = rand()%CDP_Y_UPPER_BOUND/gatherDegree + 20;
 			break;
 		case 1:
 			// Upper right quadrant
-			vPoints.push_back(CDataPoint(rand()%CDP_X_UPPER_BOUND/6 + 300, 
-										rand()%CDP_Y_UPPER_BOUND/6 + 20,
-										3,
-										rand()%CDP_COLOR_UPPER_BOUND,
-										rand()%CDP_COLOR_UPPER_BOUND,
-										rand()%CDP_COLOR_UPPER_BOUND));
+			pointXpos = rand()%CDP_X_UPPER_BOUND/gatherDegree + 300; 
+			pointYpos = rand()%CDP_Y_UPPER_BOUND/gatherDegree + 20;
 			break;
 		case 2:
 			// Lower left quadrant
-			vPoints.push_back(CDataPoint(rand()%CDP_X_UPPER_BOUND/6 + 20, 
-										rand()%CDP_Y_UPPER_BOUND/6 + 300,
-										3,
-										rand()%CDP_COLOR_UPPER_BOUND,
-										rand()%CDP_COLOR_UPPER_BOUND,
-										rand()%CDP_COLOR_UPPER_BOUND));
+			pointXpos = rand()%CDP_X_UPPER_BOUND/gatherDegree + 20;
+			pointYpos = rand()%CDP_Y_UPPER_BOUND/gatherDegree + 300;
 			break;
 		case 3:
 			// Lower right quadrant
-			vPoints.push_back(CDataPoint(rand()%CDP_X_UPPER_BOUND/6 + 300, 
-										rand()%CDP_Y_UPPER_BOUND/6 + 300,
-										3,
-										rand()%CDP_COLOR_UPPER_BOUND,
-										rand()%CDP_COLOR_UPPER_BOUND,
-										rand()%CDP_COLOR_UPPER_BOUND));
+			pointXpos = rand()%CDP_X_UPPER_BOUND/gatherDegree + 300;
+			pointYpos = rand()%CDP_Y_UPPER_BOUND/gatherDegree + 300;
 			break;
 		default:
-			vPoints.push_back(CDataPoint(rand()%CDP_X_UPPER_BOUND, 
-										rand()%CDP_Y_UPPER_BOUND,
-										3, /*rand()%6,*/
+			pointXpos = rand()%CDP_X_UPPER_BOUND;
+			pointYpos = rand()%CDP_Y_UPPER_BOUND;
+			break;
+		} // end case
+
+		vPoints.push_back(CDataPoint(pointXpos, pointYpos, 3,
 										rand()%CDP_COLOR_UPPER_BOUND,
 										rand()%CDP_COLOR_UPPER_BOUND,
 										rand()%CDP_COLOR_UPPER_BOUND));
-			break;
-		} // end case
+
 	} // end for each data point
+
+	// Check to see if any of the points are out of bounds
+#ifdef _DEBUG
+	for(vector<CDataPoint>::iterator it = vPoints.begin(); it != vPoints.end(); ++it)
+	{
+		unsigned int ptX = it->get_x();
+		unsigned int ptY = it->get_y();
+
+		if(ptX < 0)
+			OutputDebugString("X value is less than 0\n");
+		else if(ptX > CDP_X_UPPER_BOUND)
+			OutputDebugString("X value is greater than its upper bound\n");
+
+		if(ptY < 0)
+			OutputDebugString("Y value is less than 0\n");
+		else if(ptY > CDP_Y_UPPER_BOUND)
+			OutputDebugString("Y value is greater than its upper bound\n");
+	}
+#endif
 
 	vClusters.clear();
 
@@ -262,6 +282,9 @@ void CGDIWindow::initialize_data()
 										rand()%(CDP_COLOR_UPPER_BOUND-100)));
 		} // end else
 	} // end for each cluster
+
+	vOptimalClusters.clear();
+	vOptimalClusters = vClusters;
 }
 
 // Draw a single data point, which is a circle filled with a transparent color
@@ -275,10 +298,18 @@ void CGDIWindow::draw_point(HDC hdc, CDataPoint* pDP, const int xOffset, const i
 				pDP->get_b()));
 	
 	// Ellipse with same width/height so a circle of the color of the pen
-	gfx.DrawEllipse(&pen, (const int)(pDP->get_x() + (pDP->get_size()/2) + xOffset),
-						(const int)(pDP->get_y() + (pDP->get_size()/2) + yOffset),
+	gfx.DrawEllipse(&pen, (const int)(pDP->get_x() - (pDP->get_size()/2) + xOffset),
+						(const int)(pDP->get_y() - (pDP->get_size()/2) + yOffset),
 						(const int)(pDP->get_size()), 
 						(const int)(pDP->get_size()));
+
+	pen.SetColor(Color(190, 190, 190));
+
+	// Ellipse around the circle
+	gfx.DrawEllipse(&pen, (const int)(pDP->get_x() - (pDP->get_size()/2) -10 + xOffset),
+						(const int)(pDP->get_y() - (pDP->get_size()/2) -10 + yOffset),
+						(const int)(pDP->get_size()+20), 
+						(const int)(pDP->get_size()+20));
 
 	// 50% transparent but otherwise the same color
 	SolidBrush solidBrush(Color(50, pDP->get_r(),
@@ -286,8 +317,8 @@ void CGDIWindow::draw_point(HDC hdc, CDataPoint* pDP, const int xOffset, const i
 									pDP->get_b()));
 
 	// Fill the same region with the 50% transparent color
-	gfx.FillEllipse(&solidBrush, (const int)(pDP->get_x() + (pDP->get_size()/2) + xOffset),
-						(const int)(pDP->get_y() + (pDP->get_size()/2) + yOffset),
+	gfx.FillEllipse(&solidBrush, (const int)(pDP->get_x() - (pDP->get_size()/2) + xOffset),
+						(const int)(pDP->get_y() - (pDP->get_size()/2) + yOffset),
 						(const int)(pDP->get_size()), 
 						(const int)(pDP->get_size()));
 
@@ -296,8 +327,8 @@ void CGDIWindow::draw_point(HDC hdc, CDataPoint* pDP, const int xOffset, const i
 								  pDP->get_b()));
 
 	// Fill in an outer region with a lower transparency version on the same color
-	gfx.FillEllipse(&solidBrush, (const int)(pDP->get_x() + (pDP->get_size()/2) -10 + xOffset),
-								 (const int)(pDP->get_y() + (pDP->get_size()/2) -10 + yOffset),
+	gfx.FillEllipse(&solidBrush, (const int)(pDP->get_x() - (pDP->get_size()/2) -10 + xOffset),
+								 (const int)(pDP->get_y() - (pDP->get_size()/2) -10 + yOffset),
 								 (const int)(pDP->get_size() + 20),
 								 (const int)(pDP->get_size() + 20));
 }
@@ -316,8 +347,8 @@ void CGDIWindow::draw_cluster(HDC hdc, CDataPoint* pDP, const int xOffset, const
 				  pDP->get_b()));
 	
 	// Rectangle marker
-	gfx.DrawRectangle(&pen, (const int)(pDP->get_x() + (clusterSize/2) + xOffset),
-						    (const int)(pDP->get_y() + (clusterSize/2) + yOffset),
+	gfx.DrawRectangle(&pen, (const int)(pDP->get_x() - (clusterSize/2) + xOffset),
+						    (const int)(pDP->get_y() - (clusterSize/2) + yOffset),
 						    clusterSize, 
 						    clusterSize);
 
@@ -327,10 +358,34 @@ void CGDIWindow::draw_cluster(HDC hdc, CDataPoint* pDP, const int xOffset, const
 									pDP->get_b()));
 
 	// Fill the same region with the transparent color
-	gfx.FillRectangle(&solidBrush, (const int)(pDP->get_x() + (clusterSize/2) + xOffset),
-								   (const int)(pDP->get_y() + (clusterSize/2) + yOffset),
+	gfx.FillRectangle(&solidBrush, (const int)(pDP->get_x() - (clusterSize/2) + xOffset),
+								   (const int)(pDP->get_y() - (clusterSize/2) + yOffset),
 								   clusterSize, 
 								   clusterSize);
+}
+
+void CGDIWindow::draw_optimal_cluster(HDC hdc, CDataPoint* pDP, const int xOffset, const int yOffset)
+{
+	int clusterSize = 10;
+
+	Graphics gfx(hdc);
+
+	Pen pen(Color(pDP->get_r(), 
+				  pDP->get_g(), 
+				  pDP->get_b()));
+	
+	// Draw an X-shape
+	// Top-left to bottom-right
+	gfx.DrawLine(&pen, (const int)(pDP->get_x() - (clusterSize/2) + xOffset),
+					   (const int)(pDP->get_y() - (clusterSize/2) + yOffset),
+					   (const int)(pDP->get_x() + (clusterSize/2) + xOffset),
+					   (const int)(pDP->get_y() + (clusterSize/2) + yOffset));
+
+	// Top-right to bottom-left
+	gfx.DrawLine(&pen, (const int)(pDP->get_x() - (clusterSize/2) + xOffset),
+					   (const int)(pDP->get_y() + (clusterSize/2) + yOffset),
+					   (const int)(pDP->get_x() + (clusterSize/2) + xOffset),
+					   (const int)(pDP->get_y() - (clusterSize/2) + yOffset));
 }
 
 // Assign each data point to the closest cluster and color code accordingly
@@ -341,6 +396,7 @@ void CGDIWindow::assign_data()
 	for(vector<CDataPoint>::iterator it = vPoints.begin(); it != vPoints.end(); ++it)
 	{
 		float lastDistance = CDP_X_UPPER_BOUND + CDP_Y_UPPER_BOUND;
+		unsigned int currentCluster = 0;
 
 		for(vector<CDataPoint>::iterator cIt = vClusters.begin(); cIt != vClusters.end(); ++cIt)
 		{
@@ -359,8 +415,10 @@ void CGDIWindow::assign_data()
 				it->set_r(cIt->get_r());
 				it->set_b(cIt->get_b());
 				it->set_g(cIt->get_g());
-				it->set_clusterIndex(cIt - vClusters.begin());
+				it->set_clusterIndex(currentCluster);
 			}
+
+			currentCluster++;
 		} // end FOR each cluster 
 	} // end FOR each data point
 }
@@ -368,14 +426,14 @@ void CGDIWindow::assign_data()
 // Update each cluster's position by computing the centroid of all data points associated with the cluster
 void CGDIWindow::compute_centroids()
 {
+	unsigned int currentClusterIndex = 0;
 	// For each cluster...
 	for(vector<CDataPoint>::iterator cIt = vClusters.begin(); cIt != vClusters.end(); ++cIt)
 	{
-		int xAccum = 0; // x position accumulator
-		int yAccum = 0; // y position accumulator
-		int dpCount = 0; // how many data points 
-		int currentClusterIndex = cIt - vClusters.begin();
-
+		unsigned int xAccum = 0; // x position accumulator
+		unsigned int yAccum = 0; // y position accumulator
+		unsigned int dpCount = 0; // how many data points 
+		
 		// For each data point...
 		for(vector<CDataPoint>::iterator it = vPoints.begin(); it != vPoints.end(); ++it)
 		{
@@ -385,15 +443,14 @@ void CGDIWindow::compute_centroids()
 				yAccum += it->get_y();
 				dpCount++;
 			}
-
 		} // end FOR each data point
 
 		// If there are no data points in this cluster, something went wrong, 
-		// so move the cluster center to the center of the x and y range
+		// so move the cluster center to a random location
 		if(!dpCount)
 		{
-			cIt->set_x(CDP_X_UPPER_BOUND/2);
-			cIt->set_y(CDP_Y_UPPER_BOUND/2);
+			cIt->set_x(rand()%CDP_X_UPPER_BOUND);
+			cIt->set_y(rand()%CDP_Y_UPPER_BOUND);
 		}
 		else
 		{
@@ -409,6 +466,8 @@ void CGDIWindow::compute_centroids()
 			cIt->set_x((const int)xMean);
 			cIt->set_y((const int)yMean);
 		}
+
+		currentClusterIndex++;
 	} // end for each cluster
 }
 
@@ -450,4 +509,5 @@ void CGDIWindow::handle_key(const char key)
 	default:
 		break;
 	}
+
 }

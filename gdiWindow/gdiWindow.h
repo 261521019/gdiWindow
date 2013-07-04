@@ -35,11 +35,13 @@ public:
 	void update_window(HDC hdc);
 	void draw_point(HDC hdc, CDataPoint* pDP, const int xOffset = 0, const int yOffset = 0);
 	void draw_cluster(HDC hdc, CDataPoint* pDP, const int xOffset = 0, const int yOffset = 0);
+	void draw_optimal_cluster(HDC hdc, CDataPoint* pDP, const int xOffset, const int yOffset);
 private:
 	GdiplusStartupInput gdiplusStartupInput;
 	ULONG_PTR gdiplusToken;
 	vector<CDataPoint> vPoints;
 	vector<CDataPoint> vClusters;
+	vector<CDataPoint> vOptimalClusters;
 	LRESULT CALLBACK windowProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
 	void initialize_data();
 	void assign_data();

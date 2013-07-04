@@ -13,14 +13,14 @@ CDataPoint::CDataPoint()
 	clusterIndex = x = y = size = r = g = b = 0;
 }
 
-CDataPoint::CDataPoint(const int xVal, const int yVal)
+CDataPoint::CDataPoint(const unsigned int xVal, const unsigned int yVal)
 {
 	clusterIndex = x = y = size = r = g = b = 0;
 	set_x(xVal);
 	set_y(yVal);
 }
 
-CDataPoint::CDataPoint(const int xVal, const int yVal, const int sizeVal)
+CDataPoint::CDataPoint(const unsigned int xVal, const unsigned int yVal, const unsigned int sizeVal)
 {
 	clusterIndex = x = y = size = r = g = b = 0;
 	set_x(xVal);
@@ -28,7 +28,7 @@ CDataPoint::CDataPoint(const int xVal, const int yVal, const int sizeVal)
 	set_size(sizeVal);
 }
 
-CDataPoint::CDataPoint(const int xVal, const int yVal, const int sizeVal, const int rVal, const int gVal, const int bVal)
+CDataPoint::CDataPoint(const unsigned int xVal, const unsigned int yVal, const unsigned int sizeVal, const unsigned int rVal, const unsigned int gVal, const unsigned int bVal)
 {
 	clusterIndex = 0;
 	set_x(xVal);
@@ -45,7 +45,7 @@ CDataPoint::~CDataPoint()
 
 // Check bounds and assign the value if param is within bounds
 // Returns the value assigned on success, -1 otherwise
-int CDataPoint::set_clusterIndex(int idx)
+unsigned int CDataPoint::set_clusterIndex(const unsigned int idx)
 {
 	if(idx)
 		clusterIndex = idx;
@@ -57,7 +57,7 @@ int CDataPoint::set_clusterIndex(int idx)
 
 // Check bounds and assign the value if param is within bounds
 // Returns the value assigned on success, -1 otherwise
-int CDataPoint::set_x(int xVal)
+unsigned int CDataPoint::set_x(const unsigned int xVal)
 {
 	if(xVal >= CDP_X_LOWER_BOUND && xVal <= CDP_X_UPPER_BOUND)
 		x = xVal;
@@ -69,7 +69,7 @@ int CDataPoint::set_x(int xVal)
 
 // Check bounds and assign the value if param is within bounds
 // Returns the value assigned on success, -1 otherwise
-int CDataPoint::set_y(int yVal)
+unsigned int CDataPoint::set_y(const unsigned int yVal)
 {
 	if(yVal >= CDP_X_LOWER_BOUND && yVal <= CDP_X_UPPER_BOUND)
 		y = yVal;
@@ -81,7 +81,7 @@ int CDataPoint::set_y(int yVal)
 
 // Check bounds and assign the value if param is within bounds
 // Returns the value assigned on success, -1 otherwise
-int CDataPoint::set_size(int sizeVal)
+unsigned int CDataPoint::set_size(const unsigned int sizeVal)
 {
 	if(sizeVal > 0)
 		size = sizeVal;
@@ -93,7 +93,7 @@ int CDataPoint::set_size(int sizeVal)
 
 // Check bounds and assign the value if param is within bounds
 // Returns the value assigned on success, -1 otherwise
-int CDataPoint::set_r(int rVal)
+unsigned int CDataPoint::set_r(const unsigned int rVal)
 {
 	if(rVal >= CDP_COLOR_LOWER_BOUND && rVal <= CDP_COLOR_UPPER_BOUND)
 		r = rVal;
@@ -105,7 +105,7 @@ int CDataPoint::set_r(int rVal)
 
 // Check bounds and assign the value if param is within bounds
 // Returns the value assigned on success, -1 otherwise
-int CDataPoint::set_g(int gVal)
+unsigned int CDataPoint::set_g(const unsigned int gVal)
 {
 	if(gVal >= CDP_COLOR_LOWER_BOUND && gVal <= CDP_COLOR_UPPER_BOUND)
 		g = gVal;
@@ -117,7 +117,7 @@ int CDataPoint::set_g(int gVal)
 
 // Check bounds and assign the value if param is within bounds
 // Returns the value assigned on success, -1 otherwise
-int CDataPoint::set_b(int bVal)
+unsigned int CDataPoint::set_b(const unsigned int bVal)
 {
 	if(bVal >= CDP_COLOR_LOWER_BOUND && bVal <= CDP_COLOR_UPPER_BOUND)
 		b = bVal;
