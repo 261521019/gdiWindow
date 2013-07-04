@@ -163,9 +163,9 @@ void CGDIWindow::initialize_data()
 
 	for(int i=0; i < MAX_DATAPOINTS; i++)
 	{
-		int modFoo = i%4;
+		int modulo = i%4;
 		// Artificial steering of clusters
-		switch(modFoo)
+		switch(modulo)
 		{
 		case 0:
 			// Upper left quadrant
@@ -444,7 +444,7 @@ void CGDIWindow::handle_key(const char key)
 		initialize_data();
 		//InvalidateRect(hWnd, NULL, NULL);
 		break;
-	case 0x30: // 
+	case 0x20: // space bar
 		InvalidateRect(hWnd, NULL, NULL);
 		break;
 	default:
