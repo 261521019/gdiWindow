@@ -44,4 +44,6 @@ private:
 	void initialize_data();
 	void assign_data();
 	void compute_centroids();
+	void randomize_cluster_positions();
+	void handle_key(const char key = 0);
 };

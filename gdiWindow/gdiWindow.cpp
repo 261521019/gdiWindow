@@ -68,6 +68,9 @@ LRESULT CALLBACK CGDIWindow::windowProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPA
 		break;
 	case WM_ERASEBKGND:
 		break;
+	case WM_KEYDOWN:
+		handle_key((const char)wParam);
+        break;
 	case WM_LBUTTONDOWN:
 		assign_data();
 		compute_centroids();
@@ -75,8 +78,8 @@ LRESULT CALLBACK CGDIWindow::windowProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPA
 		break;
 	case WM_RBUTTONDOWN:
 		initialize_data();
-		assign_data();
-		compute_centroids();
+		//assign_data();
+		//compute_centroids();
 		InvalidateRect(hWnd, NULL, NULL);
 		break;
 	case WM_CREATE:
@@ -166,8 +169,8 @@ void CGDIWindow::initialize_data()
 		{
 		case 0:
 			// Upper left quadrant
-			vPoints.push_back(CDataPoint(rand()%CDP_X_UPPER_BOUND/3 + 20, 
-										rand()%CDP_Y_UPPER_BOUND/3 + 20,
+			vPoints.push_back(CDataPoint(rand()%CDP_X_UPPER_BOUND/6 + 20, 
+										rand()%CDP_Y_UPPER_BOUND/6 + 20,
 										3,
 										rand()%CDP_COLOR_UPPER_BOUND,
 										rand()%CDP_COLOR_UPPER_BOUND,
@@ -175,8 +178,8 @@ void CGDIWindow::initialize_data()
 			break;
 		case 1:
 			// Upper right quadrant
-			vPoints.push_back(CDataPoint(rand()%CDP_X_UPPER_BOUND/3 + 300, 
-										rand()%CDP_Y_UPPER_BOUND/3 + 20,
+			vPoints.push_back(CDataPoint(rand()%CDP_X_UPPER_BOUND/6 + 300, 
+										rand()%CDP_Y_UPPER_BOUND/6 + 20,
 										3,
 										rand()%CDP_COLOR_UPPER_BOUND,
 										rand()%CDP_COLOR_UPPER_BOUND,
@@ -184,8 +187,8 @@ void CGDIWindow::initialize_data()
 			break;
 		case 2:
 			// Lower left quadrant
-			vPoints.push_back(CDataPoint(rand()%CDP_X_UPPER_BOUND/3 + 20, 
-										rand()%CDP_Y_UPPER_BOUND/3 + 300,
+			vPoints.push_back(CDataPoint(rand()%CDP_X_UPPER_BOUND/6 + 20, 
+										rand()%CDP_Y_UPPER_BOUND/6 + 300,
 										3,
 										rand()%CDP_COLOR_UPPER_BOUND,
 										rand()%CDP_COLOR_UPPER_BOUND,
@@ -193,8 +196,8 @@ void CGDIWindow::initialize_data()
 			break;
 		case 3:
 			// Lower right quadrant
-			vPoints.push_back(CDataPoint(rand()%CDP_X_UPPER_BOUND/3 + 300, 
-										rand()%CDP_Y_UPPER_BOUND/3 + 300,
+			vPoints.push_back(CDataPoint(rand()%CDP_X_UPPER_BOUND/6 + 300, 
+										rand()%CDP_Y_UPPER_BOUND/6 + 300,
 										3,
 										rand()%CDP_COLOR_UPPER_BOUND,
 										rand()%CDP_COLOR_UPPER_BOUND,
@@ -407,4 +410,44 @@ void CGDIWindow::compute_centroids()
 			cIt->set_y((const int)yMean);
 		}
 	} // end for each cluster
+}
+
+// Without touching the data sets, or the colors of the clusters, randomize
+// the positions of the clusters
+void CGDIWindow::randomize_cluster_positions()
+{
+	for(vector<CDataPoint>::iterator cIt = vClusters.begin(); cIt != vClusters.end(); ++cIt)
+	{
+		cIt->set_x(rand()%CDP_X_UPPER_BOUND);
+		cIt->set_y(rand()%CDP_Y_UPPER_BOUND);
+	} // end FOR each cluster
+}
+
+// Handle a key passed from the WM_KEYDOWN message handler
+void CGDIWindow::handle_key(const char key)
+{
+	switch(key)
+	{
+	case 0x52: // r
+		randomize_cluster_positions();
+		//InvalidateRect(hWnd, NULL, NULL);
+		break;
+	case 0x43: // c
+		compute_centroids();
+		//InvalidateRect(hWnd, NULL, NULL);
+		break;
+	case 0x41: // a
+		assign_data();
+		//InvalidateRect(hWnd, NULL, NULL);
+		break;
+	case 0x49: // i
+		initialize_data();
+		//InvalidateRect(hWnd, NULL, NULL);
+		break;
+	case 0x30: // 
+		InvalidateRect(hWnd, NULL, NULL);
+		break;
+	default:
+		break;
+	}
 }

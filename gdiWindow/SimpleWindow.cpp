@@ -95,10 +95,10 @@ LRESULT CALLBACK CSimpleWindow::staticWindowProc(HWND hWnd, UINT uMsg, WPARAM wP
 	if(uMsg == WM_CREATE)
 	{
 		thisSimWin = (CSimpleWindow*)((LPCREATESTRUCT)lParam)->lpCreateParams;
-		SetWindowLongPtr(hWnd, GWL_USERDATA, (LONG_PTR)thisSimWin);
+		SetWindowLongPtr(hWnd, GWLP_USERDATA, (LONG_PTR)thisSimWin);
 	}
 	else
-		thisSimWin = (CSimpleWindow*)GetWindowLongPtr(hWnd, GWL_USERDATA);
+		thisSimWin = (CSimpleWindow*)GetWindowLongPtr(hWnd, GWLP_USERDATA);
 
 	if(thisSimWin == NULL)
 		return DefWindowProc(hWnd, uMsg, wParam, lParam);
