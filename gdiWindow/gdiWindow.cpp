@@ -38,6 +38,9 @@ CGDIWindow::~CGDIWindow(void)
 {
 	// Where's the best place for this? Here or after the parent's message_loop returns?
 //	GdiplusShutdown(gdiplusToken); 
+	DeleteCriticalSection(&csPoints);
+	DeleteCriticalSection(&csClusters);
+	DeleteCriticalSection(&csOptimalClusters);
 }
 
 void CGDIWindow::create_window()
@@ -132,26 +135,32 @@ void CGDIWindow::update_window(HDC hdc)
 	PointF      pointF(50.0f, 10.0f);
 	graphics.DrawString(L"K-Means Cluster Analysis", -1, &font, pointF, &brush);
 
+	EnterCriticalSection(&csPoints);
 	// Draw each data point
 	for( vector<CDataPoint>::iterator it = vPoints.begin() ; it != vPoints.end(); ++it)
 	{
 		CDataPoint &dataPoint = *it;
 		draw_point(hdc, &dataPoint, insetOffsetX, insetOffsetY);
 	}
+	LeaveCriticalSection(&csPoints);
 
+	EnterCriticalSection(&csClusters);
 	// Draw each cluster
 	for( vector<CDataPoint>::iterator cIt = vClusters.begin() ; cIt != vClusters.end(); ++cIt)
 	{
 		CDataPoint &cluster = *cIt;
 		draw_cluster(hdc, &cluster, insetOffsetX, insetOffsetY);
 	}
+	LeaveCriticalSection(&csClusters);
 
+	EnterCriticalSection(&csOptimalClusters);
 	// Draw each optimal cluster
 	for( vector<CDataPoint>::iterator ocIt = vOptimalClusters.begin() ; ocIt != vOptimalClusters.end(); ++ocIt)
 	{
 		CDataPoint &optimalCluster = *ocIt;
 		draw_optimal_cluster(hdc, &optimalCluster, insetOffsetX, insetOffsetY);
 	}
+	LeaveCriticalSection(&csOptimalClusters);
 
 	// Copy from the memory DC to the original
 	BitBlt(originalHDC, 0, 0, width, height, hdc, 0, 0, SRCCOPY); 
@@ -164,6 +173,12 @@ void CGDIWindow::update_window(HDC hdc)
 
 void CGDIWindow::initialize_data()
 {
+	// TODO clean up this init, put somewhere more relevant and check the return values
+	InitializeCriticalSectionAndSpinCount(&csPoints, 0x00000400);
+	InitializeCriticalSectionAndSpinCount(&csClusters, 0x00000400);
+	InitializeCriticalSectionAndSpinCount(&csOptimalClusters, 0x00000400);
+
+
 	// How much should the points be gathered into four quadrants?
 	unsigned int gatherDegree = 5;
 	
@@ -172,6 +187,7 @@ void CGDIWindow::initialize_data()
 	unsigned int pointXpos = 0;
 	unsigned int pointYpos = 0;
 
+	EnterCriticalSection(&csPoints);
 	vPoints.clear();
 
 	srand(rand()%300 + (unsigned int)time(NULL));
@@ -234,6 +250,9 @@ void CGDIWindow::initialize_data()
 	}
 #endif
 
+	LeaveCriticalSection(&csPoints);
+	EnterCriticalSection(&csClusters);
+
 	vClusters.clear();
 
 	for(int j=0; j < MAX_CLUSTERS; j++)
@@ -283,8 +302,13 @@ void CGDIWindow::initialize_data()
 		} // end else
 	} // end for each cluster
 
+	LeaveCriticalSection(&csClusters);
+	EnterCriticalSection(&csOptimalClusters);
+
 	vOptimalClusters.clear();
 	vOptimalClusters = vClusters;
+
+	LeaveCriticalSection(&csOptimalClusters);
 }
 
 // Draw a single data point, which is a circle filled with a transparent color
@@ -391,6 +415,9 @@ void CGDIWindow::draw_optimal_cluster(HDC hdc, CDataPoint* pDP, const int xOffse
 // Assign each data point to the closest cluster and color code accordingly
 void CGDIWindow::assign_data()
 {
+	EnterCriticalSection(&csPoints);
+	EnterCriticalSection(&csClusters);
+
 	// For each data point, measure the distance to each cluster and color the data point 
 	// according to the closest cluster
 	for(vector<CDataPoint>::iterator it = vPoints.begin(); it != vPoints.end(); ++it)
@@ -400,11 +427,11 @@ void CGDIWindow::assign_data()
 
 		for(vector<CDataPoint>::iterator cIt = vClusters.begin(); cIt != vClusters.end(); ++cIt)
 		{
-			float X2minusX1 = (float)(it->get_x() - (float)(cIt->get_x())); 
-			float Y2minusY1 = (float)(it->get_y() - (float)(cIt->get_y()));
+			float X2minusX1 = (float)((float)it->get_x() - (float)cIt->get_x()); 
+			float Y2minusY1 = (float)((float)it->get_y() - (float)cIt->get_y());
 
-			float squaredXdiff = X2minusX1*X2minusX1;
-			float squaredYdiff = Y2minusY1*Y2minusY1;
+			float squaredXdiff = X2minusX1 * X2minusX1;
+			float squaredYdiff = Y2minusY1 * Y2minusY1;
 		
 			float distance = sqrt(squaredXdiff + squaredYdiff);
 
@@ -421,19 +448,26 @@ void CGDIWindow::assign_data()
 			currentCluster++;
 		} // end FOR each cluster 
 	} // end FOR each data point
-}
+
+	LeaveCriticalSection(&csClusters);
+	LeaveCriticalSection(&csPoints);
+
+} // end assign_data()
 
 // Update each cluster's position by computing the centroid of all data points associated with the cluster
 void CGDIWindow::compute_centroids()
 {
+	EnterCriticalSection(&csClusters);
+	EnterCriticalSection(&csPoints);
+
 	unsigned int currentClusterIndex = 0;
 	// For each cluster...
 	for(vector<CDataPoint>::iterator cIt = vClusters.begin(); cIt != vClusters.end(); ++cIt)
 	{
-		unsigned int xAccum = 0; // x position accumulator
-		unsigned int yAccum = 0; // y position accumulator
-		unsigned int dpCount = 0; // how many data points 
-		
+		float xAccum = 0; // x position accumulator
+		float yAccum = 0; // y position accumulator
+		float dpCount = 0; // how many data points 
+
 		// For each data point...
 		for(vector<CDataPoint>::iterator it = vPoints.begin(); it != vPoints.end(); ++it)
 		{
@@ -446,20 +480,21 @@ void CGDIWindow::compute_centroids()
 		} // end FOR each data point
 
 		// If there are no data points in this cluster, something went wrong, 
-		// so move the cluster center to a random location
+		// so move the cluster center to a random location 
 		if(!dpCount)
 		{
+			OutputDebugString("Error - no data points associated with cluster\n");
 			cIt->set_x(rand()%CDP_X_UPPER_BOUND);
 			cIt->set_y(rand()%CDP_Y_UPPER_BOUND);
 		}
 		else
 		{
-			// Once through all data points, compute the centroid as the mean of x and y
-			float xMean = (float) xAccum / (float) dpCount;
+			// Once through all data points, compute the centroid for the current cluster as the mean of x and y
+			float xMean = xAccum / dpCount;
 			if((xMean - (int)xMean) > 0.5f)
 				xMean++;
 
-			float yMean = (float) yAccum / (float) dpCount;
+			float yMean = yAccum / dpCount;
 			if((yMean - (int)yMean) > 0.5f)
 				yMean++;
 
@@ -468,18 +503,26 @@ void CGDIWindow::compute_centroids()
 		}
 
 		currentClusterIndex++;
+
 	} // end for each cluster
+
+	LeaveCriticalSection(&csPoints);
+	LeaveCriticalSection(&csClusters);
 }
 
 // Without touching the data sets, or the colors of the clusters, randomize
 // the positions of the clusters
 void CGDIWindow::randomize_cluster_positions()
 {
+	EnterCriticalSection(&csClusters);
+
 	for(vector<CDataPoint>::iterator cIt = vClusters.begin(); cIt != vClusters.end(); ++cIt)
 	{
 		cIt->set_x(rand()%CDP_X_UPPER_BOUND);
 		cIt->set_y(rand()%CDP_Y_UPPER_BOUND);
 	} // end FOR each cluster
+
+	LeaveCriticalSection(&csClusters);
 }
 
 // Handle a key passed from the WM_KEYDOWN message handler

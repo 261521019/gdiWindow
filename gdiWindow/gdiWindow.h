@@ -48,4 +48,7 @@ private:
 	void compute_centroids();
 	void randomize_cluster_positions();
 	void handle_key(const char key = 0);
+	CRITICAL_SECTION csPoints;
+	CRITICAL_SECTION csClusters;
+	CRITICAL_SECTION csOptimalClusters;
 };
