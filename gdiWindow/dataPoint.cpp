@@ -47,10 +47,7 @@ CDataPoint::~CDataPoint()
 // Returns the value assigned on success, -1 otherwise
 unsigned int CDataPoint::set_clusterIndex(const unsigned int idx)
 {
-	if(idx)
-		clusterIndex = idx;
-	else
-		return -1;
+	clusterIndex = idx;
 
 	return x;
 }
