@@ -21,7 +21,7 @@ public:
 	CDataPoint(const unsigned int x, const unsigned int y, const unsigned int size);
 	CDataPoint(const unsigned int x, const unsigned int y, const unsigned int size, const unsigned int r, const unsigned int g, const unsigned int b);
 	~CDataPoint();
-	unsigned int get_clusterIndex(){ return clusterIndex;};
+	unsigned int get_cluster_index(){ return clusterIndex;};
 	unsigned int get_x(){ return x;};
 	unsigned int get_y(){ return y;};
 	unsigned int get_x_bounds(){ return CDP_X_UPPER_BOUND;};
@@ -30,7 +30,7 @@ public:
 	unsigned int get_r(){ return r;};
 	unsigned int get_g(){ return g;};
 	unsigned int get_b(){ return b;};
-	unsigned int set_clusterIndex(const unsigned int idx = 0);
+	unsigned int set_cluster_index(const unsigned int idx = 0);
 	unsigned int set_x(const unsigned int xVal = 0);
 	unsigned int set_y(const unsigned int yVal = 0);
 	unsigned int set_size(const unsigned int sizeVal = 0);

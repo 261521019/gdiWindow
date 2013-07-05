@@ -442,7 +442,7 @@ void CGDIWindow::assign_data()
 				it->set_r(cIt->get_r());
 				it->set_b(cIt->get_b());
 				it->set_g(cIt->get_g());
-				it->set_clusterIndex(currentCluster);
+				it->set_cluster_index(currentCluster);
 			}
 
 			currentCluster++;
@@ -471,7 +471,7 @@ void CGDIWindow::compute_centroids()
 		// For each data point...
 		for(vector<CDataPoint>::iterator it = vPoints.begin(); it != vPoints.end(); ++it)
 		{
-			if(it->get_clusterIndex() == currentClusterIndex)
+			if(it->get_cluster_index() == currentClusterIndex)
 			{
 				xAccum += it->get_x();
 				yAccum += it->get_y();

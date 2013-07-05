@@ -45,7 +45,7 @@ CDataPoint::~CDataPoint()
 
 // Check bounds and assign the value if param is within bounds
 // Returns the value assigned on success, -1 otherwise
-unsigned int CDataPoint::set_clusterIndex(const unsigned int idx)
+unsigned int CDataPoint::set_cluster_index(const unsigned int idx)
 {
 	clusterIndex = idx;
 
