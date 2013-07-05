@@ -6,6 +6,7 @@ A Win32 window creation and GDI+ application. To demonstrate the features of the
 Future Work
 ===========
 
+Fix the initial random seed generator so it's smarter (probably a distance check on nearest neighbor)
 Implement a threading model with synchronization
 
 License

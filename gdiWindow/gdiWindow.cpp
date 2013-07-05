@@ -10,12 +10,22 @@
 
 CGDIWindow::CGDIWindow()
 {
+	// TODO clean up this init, put somewhere more relevant and check the return values
+	InitializeCriticalSectionAndSpinCount(&csPoints, 0x00000400);
+	InitializeCriticalSectionAndSpinCount(&csClusters, 0x00000400);
+	InitializeCriticalSectionAndSpinCount(&csOptimalClusters, 0x00000400);
+
 	initialize_data();
 	assign_data();
 }
 
 CGDIWindow::CGDIWindow(const int w, const int h)
 {
+	// TODO clean up this init, put somewhere more relevant and check the return values
+	InitializeCriticalSectionAndSpinCount(&csPoints, 0x00000400);
+	InitializeCriticalSectionAndSpinCount(&csClusters, 0x00000400);
+	InitializeCriticalSectionAndSpinCount(&csOptimalClusters, 0x00000400);
+
 	appName = "GDI Window";
 	hWnd = NULL;
 	width = w;
@@ -26,6 +36,11 @@ CGDIWindow::CGDIWindow(const int w, const int h)
 
 CGDIWindow::CGDIWindow(string name, const int w, const int h)
 {
+	// TODO clean up this init, put somewhere more relevant and check the return values
+	InitializeCriticalSectionAndSpinCount(&csPoints, 0x00000400);
+	InitializeCriticalSectionAndSpinCount(&csClusters, 0x00000400);
+	InitializeCriticalSectionAndSpinCount(&csOptimalClusters, 0x00000400);
+
 	appName = name;
 	hWnd = NULL;
 	width = w;
@@ -173,14 +188,8 @@ void CGDIWindow::update_window(HDC hdc)
 
 void CGDIWindow::initialize_data()
 {
-	// TODO clean up this init, put somewhere more relevant and check the return values
-	InitializeCriticalSectionAndSpinCount(&csPoints, 0x00000400);
-	InitializeCriticalSectionAndSpinCount(&csClusters, 0x00000400);
-	InitializeCriticalSectionAndSpinCount(&csOptimalClusters, 0x00000400);
-
-
 	// How much should the points be gathered into four quadrants?
-	unsigned int gatherDegree = 5;
+	unsigned int gatherDegree = 4;
 	
 	// Temporary storage for randomized point position, which is validated 
 	// and randomized again if either are out of bounds
@@ -194,7 +203,7 @@ void CGDIWindow::initialize_data()
 
 	for(int i=0; i < MAX_DATAPOINTS; i++)
 	{
-		int modulo = i%4;
+		int modulo = i%gatherDegree;
 		// Artificial steering of clusters
 		switch(modulo)
 		{
