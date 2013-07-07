@@ -190,6 +190,13 @@ void CGDIWindow::initialize_data()
 {
 	// How much should the points be gathered into four quadrants?
 	unsigned int gatherDegree = 4;
+	unsigned int edgePaddingX = CDP_X_UPPER_BOUND / 25; // 1/25th the bounds for padding
+	unsigned int edgePaddingY = CDP_Y_UPPER_BOUND / 25; // same for y
+
+	// Need to break the grid of X and Y upper bounds into quadrants,
+	// which is useful for testing a poor performing case of K-Means
+	unsigned int quadrantOffsetX = CDP_X_UPPER_BOUND / 2;
+	unsigned int quadrantOffsetY = CDP_Y_UPPER_BOUND / 2;
 	
 	// Temporary storage for randomized point position, which is validated 
 	// and randomized again if either are out of bounds
@@ -199,33 +206,36 @@ void CGDIWindow::initialize_data()
 	EnterCriticalSection(&csPoints);
 	vPoints.clear();
 
-	srand(rand()%300 + (unsigned int)time(NULL));
+	// Need more entropy here...
+	srand((unsigned int)time(NULL));
 
 	for(int i=0; i < MAX_DATAPOINTS; i++)
 	{
-		int modulo = i%gatherDegree;
-		// Artificial steering of clusters
+		// We want to create four groups, one for each quadrant
+		int modulo = i%4;
+
+		// Steer data points into clusters
 		switch(modulo)
 		{
 		case 0:
 			// Upper left quadrant
-			pointXpos = rand()%CDP_X_UPPER_BOUND/gatherDegree + 20;
-			pointYpos = rand()%CDP_Y_UPPER_BOUND/gatherDegree + 20;
+			pointXpos = rand()%CDP_X_UPPER_BOUND/gatherDegree + edgePaddingX;
+			pointYpos = rand()%CDP_Y_UPPER_BOUND/gatherDegree + edgePaddingY;
 			break;
 		case 1:
 			// Upper right quadrant
-			pointXpos = rand()%CDP_X_UPPER_BOUND/gatherDegree + 300; 
-			pointYpos = rand()%CDP_Y_UPPER_BOUND/gatherDegree + 20;
+			pointXpos = rand()%CDP_X_UPPER_BOUND/gatherDegree + edgePaddingX + quadrantOffsetX; 
+			pointYpos = rand()%CDP_Y_UPPER_BOUND/gatherDegree + edgePaddingY;
 			break;
 		case 2:
 			// Lower left quadrant
-			pointXpos = rand()%CDP_X_UPPER_BOUND/gatherDegree + 20;
-			pointYpos = rand()%CDP_Y_UPPER_BOUND/gatherDegree + 300;
+			pointXpos = rand()%CDP_X_UPPER_BOUND/gatherDegree + edgePaddingX;
+			pointYpos = rand()%CDP_Y_UPPER_BOUND/gatherDegree + edgePaddingY + quadrantOffsetY;
 			break;
 		case 3:
 			// Lower right quadrant
-			pointXpos = rand()%CDP_X_UPPER_BOUND/gatherDegree + 300;
-			pointYpos = rand()%CDP_Y_UPPER_BOUND/gatherDegree + 300;
+			pointXpos = rand()%CDP_X_UPPER_BOUND/gatherDegree + edgePaddingX + quadrantOffsetX;
+			pointYpos = rand()%CDP_Y_UPPER_BOUND/gatherDegree + edgePaddingY + quadrantOffsetY;
 			break;
 		default:
 			pointXpos = rand()%CDP_X_UPPER_BOUND;
