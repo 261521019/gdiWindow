@@ -9,8 +9,8 @@
 int WINAPI WinMain(HINSTANCE hInst, HINSTANCE hPrevInst, LPSTR lpCmdLine, int nCmdShow)
 {
 	CGDIWindow gdiWin("Cluster Analysis", 800, 620);
-	gdiWin.create_window();
-	gdiWin.message_loop();
+	gdiWin.createWindow();
+	gdiWin.messageLoop();
 
 	return 0;
 }

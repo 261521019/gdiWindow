@@ -28,7 +28,7 @@ CSimpleWindow::~CSimpleWindow(void)
 	SendMessage(hWnd, WM_CLOSE, NULL, NULL);
 }
 
-void CSimpleWindow::create_window()
+void CSimpleWindow::createWindow()
 {
 	WNDCLASSEX wcex;
 
@@ -55,7 +55,7 @@ void CSimpleWindow::create_window()
 	UpdateWindow(hWnd);
 }
 
-void CSimpleWindow::message_loop()
+void CSimpleWindow::messageLoop()
 {
 	MSG msg = {0};
 

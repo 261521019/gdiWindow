@@ -15,8 +15,8 @@ CGDIWindow::CGDIWindow()
 	InitializeCriticalSectionAndSpinCount(&csClusters, 0x00000400);
 	InitializeCriticalSectionAndSpinCount(&csOptimalClusters, 0x00000400);
 
-	initialize_data();
-	assign_data();
+	initializeData();
+	assignData();
 }
 
 CGDIWindow::CGDIWindow(const int w, const int h)
@@ -30,8 +30,8 @@ CGDIWindow::CGDIWindow(const int w, const int h)
 	hWnd = NULL;
 	width = w;
 	height = h;
-	initialize_data();
-	assign_data();
+	initializeData();
+	assignData();
 }
 
 CGDIWindow::CGDIWindow(string name, const int w, const int h)
@@ -45,8 +45,8 @@ CGDIWindow::CGDIWindow(string name, const int w, const int h)
 	hWnd = NULL;
 	width = w;
 	height = h;
-	initialize_data();
-	assign_data();
+	initializeData();
+	assignData();
 }
 
 CGDIWindow::~CGDIWindow(void)
@@ -58,16 +58,16 @@ CGDIWindow::~CGDIWindow(void)
 	DeleteCriticalSection(&csOptimalClusters);
 }
 
-void CGDIWindow::create_window()
+void CGDIWindow::createWindow()
 {
 	GdiplusStartup(&gdiplusToken, &gdiplusStartupInput, NULL);
 
-	CSimpleWindow::create_window();
+	CSimpleWindow::createWindow();
 }
 
-void CGDIWindow::message_loop()
+void CGDIWindow::messageLoop()
 {
-	CSimpleWindow::message_loop();
+	CSimpleWindow::messageLoop();
 
 	GdiplusShutdown(gdiplusToken);
 }
@@ -81,23 +81,21 @@ LRESULT CALLBACK CGDIWindow::windowProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPA
 	{
 	case WM_PAINT:
 		hdc = BeginPaint(hWnd, &ps);
-		update_window(hdc);
+		updateWindow(hdc);
 		EndPaint(hWnd, &ps);
 		break;
 	case WM_ERASEBKGND:
 		break;
 	case WM_KEYDOWN:
-		handle_key((const char)wParam);
+		handleKey((const char)wParam);
         break;
 	case WM_LBUTTONDOWN:
-		assign_data();
-		compute_centroids();
+		assignData();
+		computeCentroids();
 		InvalidateRect(hWnd, NULL, NULL);
 		break;
 	case WM_RBUTTONDOWN:
-		initialize_data();
-		//assign_data();
-		//compute_centroids();
+		initializeData();
 		InvalidateRect(hWnd, NULL, NULL);
 		break;
 	case WM_CREATE:
@@ -112,7 +110,7 @@ LRESULT CALLBACK CGDIWindow::windowProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPA
 	return 0;
 }
 
-void CGDIWindow::update_window(HDC hdc)
+void CGDIWindow::updateWindow(HDC hdc)
 {
 	if(vPoints.size() < 1)
 		return;
@@ -126,7 +124,7 @@ void CGDIWindow::update_window(HDC hdc)
 	Graphics graphics(hdc);
 
 	// Offset within the main window where the cluster of points go
-	int insetOffsetX = 50; // in pixels
+	int insetOffsetX = 25; // in pixels
 	int insetOffsetY = 50; // in pixels
 	int insetXbounds = vPoints[0].get_x_bounds() + 6; // 6 is padding for size
 	int insetYbounds = vPoints[0].get_y_bounds() + 6; // 6 is padding for size
@@ -147,7 +145,7 @@ void CGDIWindow::update_window(HDC hdc)
 	SolidBrush  brush(Color(255, 0, 0, 255));
 	FontFamily  fontFamily(L"Lucida Sans");
 	Font        font(&fontFamily, 24, FontStyleRegular, UnitPixel);
-	PointF      pointF(50.0f, 10.0f);
+	PointF      pointF(30.0f, 12.0f);
 	graphics.DrawString(L"K-Means Cluster Analysis", -1, &font, pointF, &brush);
 
 	EnterCriticalSection(&csPoints);
@@ -155,7 +153,7 @@ void CGDIWindow::update_window(HDC hdc)
 	for( vector<CDataPoint>::iterator it = vPoints.begin() ; it != vPoints.end(); ++it)
 	{
 		CDataPoint &dataPoint = *it;
-		draw_point(hdc, &dataPoint, insetOffsetX, insetOffsetY);
+		drawPoint(hdc, &dataPoint, insetOffsetX, insetOffsetY);
 	}
 	LeaveCriticalSection(&csPoints);
 
@@ -164,7 +162,7 @@ void CGDIWindow::update_window(HDC hdc)
 	for( vector<CDataPoint>::iterator cIt = vClusters.begin() ; cIt != vClusters.end(); ++cIt)
 	{
 		CDataPoint &cluster = *cIt;
-		draw_cluster(hdc, &cluster, insetOffsetX, insetOffsetY);
+		drawCluster(hdc, &cluster, insetOffsetX, insetOffsetY);
 	}
 	LeaveCriticalSection(&csClusters);
 
@@ -173,7 +171,7 @@ void CGDIWindow::update_window(HDC hdc)
 	for( vector<CDataPoint>::iterator ocIt = vOptimalClusters.begin() ; ocIt != vOptimalClusters.end(); ++ocIt)
 	{
 		CDataPoint &optimalCluster = *ocIt;
-		draw_optimal_cluster(hdc, &optimalCluster, insetOffsetX, insetOffsetY);
+		drawOptimalCluster(hdc, &optimalCluster, insetOffsetX, insetOffsetY);
 	}
 	LeaveCriticalSection(&csOptimalClusters);
 
@@ -186,10 +184,10 @@ void CGDIWindow::update_window(HDC hdc)
 	ReleaseDC(hWnd, hdc);
 }
 
-void CGDIWindow::initialize_data()
+void CGDIWindow::initializeData()
 {
 	// How much should the points be gathered into four quadrants?
-	unsigned int gatherDegree = 4;
+	unsigned int gatherDegree = 2;
 	unsigned int edgePaddingX = CDP_X_UPPER_BOUND / 25; // 1/25th the bounds for padding
 	unsigned int edgePaddingY = CDP_Y_UPPER_BOUND / 25; // same for y
 
@@ -332,7 +330,7 @@ void CGDIWindow::initialize_data()
 
 // Draw a single data point, which is a circle filled with a transparent color
 // based on the data in the CDataPoint passed
-void CGDIWindow::draw_point(HDC hdc, CDataPoint* pDP, const int xOffset, const int yOffset)
+void CGDIWindow::drawPoint(HDC hdc, CDataPoint* pDP, const int xOffset, const int yOffset)
 {
 	Graphics gfx(hdc);
 
@@ -379,7 +377,7 @@ void CGDIWindow::draw_point(HDC hdc, CDataPoint* pDP, const int xOffset, const i
 // Draw a single cluster, which is a sqaure filled with a transparent color
 // based on the data in the CDataPoint passed
 // The size parameter isn't used - rather the size of the rectangles are hard coded within
-void CGDIWindow::draw_cluster(HDC hdc, CDataPoint* pDP, const int xOffset, const int yOffset)
+void CGDIWindow::drawCluster(HDC hdc, CDataPoint* pDP, const int xOffset, const int yOffset)
 {
 	int clusterSize = 10;
 
@@ -407,7 +405,7 @@ void CGDIWindow::draw_cluster(HDC hdc, CDataPoint* pDP, const int xOffset, const
 								   clusterSize);
 }
 
-void CGDIWindow::draw_optimal_cluster(HDC hdc, CDataPoint* pDP, const int xOffset, const int yOffset)
+void CGDIWindow::drawOptimalCluster(HDC hdc, CDataPoint* pDP, const int xOffset, const int yOffset)
 {
 	int clusterSize = 10;
 
@@ -432,7 +430,7 @@ void CGDIWindow::draw_optimal_cluster(HDC hdc, CDataPoint* pDP, const int xOffse
 }
 
 // Assign each data point to the closest cluster and color code accordingly
-void CGDIWindow::assign_data()
+void CGDIWindow::assignData()
 {
 	EnterCriticalSection(&csPoints);
 	EnterCriticalSection(&csClusters);
@@ -474,7 +472,7 @@ void CGDIWindow::assign_data()
 } // end assign_data()
 
 // Update each cluster's position by computing the centroid of all data points associated with the cluster
-void CGDIWindow::compute_centroids()
+void CGDIWindow::computeCentroids()
 {
 	EnterCriticalSection(&csClusters);
 	EnterCriticalSection(&csPoints);
@@ -531,7 +529,7 @@ void CGDIWindow::compute_centroids()
 
 // Without touching the data sets, or the colors of the clusters, randomize
 // the positions of the clusters
-void CGDIWindow::randomize_cluster_positions()
+void CGDIWindow::randomizeClusterPositions()
 {
 	EnterCriticalSection(&csClusters);
 
@@ -545,24 +543,24 @@ void CGDIWindow::randomize_cluster_positions()
 }
 
 // Handle a key passed from the WM_KEYDOWN message handler
-void CGDIWindow::handle_key(const char key)
+void CGDIWindow::handleKey(const char key)
 {
 	switch(key)
 	{
 	case 0x52: // r
-		randomize_cluster_positions();
+		randomizeClusterPositions();
 		//InvalidateRect(hWnd, NULL, NULL);
 		break;
 	case 0x43: // c
-		compute_centroids();
+		computeCentroids();
 		//InvalidateRect(hWnd, NULL, NULL);
 		break;
 	case 0x41: // a
-		assign_data();
+		assignData();
 		//InvalidateRect(hWnd, NULL, NULL);
 		break;
 	case 0x49: // i
-		initialize_data();
+		initializeData();
 		//InvalidateRect(hWnd, NULL, NULL);
 		break;
 	case 0x20: // space bar

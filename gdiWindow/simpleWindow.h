@@ -40,8 +40,8 @@ public:
 	CSimpleWindow();
 	CSimpleWindow(const int width, const int height);
 	~CSimpleWindow(void);
-	void create_window();
-	void message_loop();
+	void createWindow();
+	void messageLoop();
 protected:
 	// This is the static version of the windowProc that is used for class registration
 	static LRESULT CALLBACK staticWindowProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
