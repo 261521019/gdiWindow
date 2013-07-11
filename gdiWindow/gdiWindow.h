@@ -41,7 +41,7 @@ private:
 	ULONG_PTR gdiplusToken;
 	vector<CDataPoint> vPoints;
 	vector<CDataPoint> vClusters;
-	vector<CDataPoint> vOptimalClusters;
+	vector<CDataPoint> vStartingClusters;
 	LRESULT CALLBACK windowProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
 	void initializeData();
 	void assignData();
@@ -50,5 +50,5 @@ private:
 	void handleKey(const char key = 0);
 	CRITICAL_SECTION csPoints;
 	CRITICAL_SECTION csClusters;
-	CRITICAL_SECTION csOptimalClusters;
+	CRITICAL_SECTION csStartingClusters;
 };

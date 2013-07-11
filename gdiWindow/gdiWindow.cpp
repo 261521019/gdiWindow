@@ -13,7 +13,7 @@ CGDIWindow::CGDIWindow()
 	// TODO clean up this init, put somewhere more relevant and check the return values
 	InitializeCriticalSectionAndSpinCount(&csPoints, 0x00000400);
 	InitializeCriticalSectionAndSpinCount(&csClusters, 0x00000400);
-	InitializeCriticalSectionAndSpinCount(&csOptimalClusters, 0x00000400);
+	InitializeCriticalSectionAndSpinCount(&csStartingClusters, 0x00000400);
 
 	initializeData();
 	assignData();
@@ -24,7 +24,7 @@ CGDIWindow::CGDIWindow(const int w, const int h)
 	// TODO clean up this init, put somewhere more relevant and check the return values
 	InitializeCriticalSectionAndSpinCount(&csPoints, 0x00000400);
 	InitializeCriticalSectionAndSpinCount(&csClusters, 0x00000400);
-	InitializeCriticalSectionAndSpinCount(&csOptimalClusters, 0x00000400);
+	InitializeCriticalSectionAndSpinCount(&csStartingClusters, 0x00000400);
 
 	appName = "GDI Window";
 	hWnd = NULL;
@@ -39,7 +39,7 @@ CGDIWindow::CGDIWindow(string name, const int w, const int h)
 	// TODO clean up this init, put somewhere more relevant and check the return values
 	InitializeCriticalSectionAndSpinCount(&csPoints, 0x00000400);
 	InitializeCriticalSectionAndSpinCount(&csClusters, 0x00000400);
-	InitializeCriticalSectionAndSpinCount(&csOptimalClusters, 0x00000400);
+	InitializeCriticalSectionAndSpinCount(&csStartingClusters, 0x00000400);
 
 	appName = name;
 	hWnd = NULL;
@@ -55,7 +55,7 @@ CGDIWindow::~CGDIWindow(void)
 //	GdiplusShutdown(gdiplusToken); 
 	DeleteCriticalSection(&csPoints);
 	DeleteCriticalSection(&csClusters);
-	DeleteCriticalSection(&csOptimalClusters);
+	DeleteCriticalSection(&csStartingClusters);
 }
 
 void CGDIWindow::createWindow()
@@ -166,14 +166,14 @@ void CGDIWindow::updateWindow(HDC hdc)
 	}
 	LeaveCriticalSection(&csClusters);
 
-	EnterCriticalSection(&csOptimalClusters);
+	EnterCriticalSection(&csStartingClusters);
 	// Draw each optimal cluster
-	for( vector<CDataPoint>::iterator ocIt = vOptimalClusters.begin() ; ocIt != vOptimalClusters.end(); ++ocIt)
+	for( vector<CDataPoint>::iterator ocIt = vStartingClusters.begin() ; ocIt != vStartingClusters.end(); ++ocIt)
 	{
 		CDataPoint &optimalCluster = *ocIt;
 		drawOptimalCluster(hdc, &optimalCluster, insetOffsetX, insetOffsetY);
 	}
-	LeaveCriticalSection(&csOptimalClusters);
+	LeaveCriticalSection(&csStartingClusters);
 
 	// Copy from the memory DC to the original
 	BitBlt(originalHDC, 0, 0, width, height, hdc, 0, 0, SRCCOPY); 
@@ -320,12 +320,12 @@ void CGDIWindow::initializeData()
 	} // end for each cluster
 
 	LeaveCriticalSection(&csClusters);
-	EnterCriticalSection(&csOptimalClusters);
+	EnterCriticalSection(&csStartingClusters);
 
-	vOptimalClusters.clear();
-	vOptimalClusters = vClusters;
+	vStartingClusters.clear();
+	vStartingClusters = vClusters;
 
-	LeaveCriticalSection(&csOptimalClusters);
+	LeaveCriticalSection(&csStartingClusters);
 }
 
 // Draw a single data point, which is a circle filled with a transparent color
